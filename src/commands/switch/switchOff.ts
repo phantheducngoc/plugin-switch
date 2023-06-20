@@ -11,7 +11,7 @@ import { Messages } from '@salesforce/core';
 import { execCmd } from '../..';
 
 Messages.importMessagesDirectory(__dirname);
-const messages = Messages.loadMessages('@salesforce/plugin-switch', 'switch.switchOff');
+const messages = Messages.loadMessages('plugin-switch', 'switch.switchOff');
 
 export type SwitchSwitchOffResult = {
   path: string;

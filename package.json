@@ -1,9 +1,11 @@
 {
-  "name": "@salesforce/plugin-switch",
-  "description": "",
-  "version": "0.0.1",
+  "name": "plugin-switch",
+  "description": "Before you generate a new Salesforce plugin, set up these prerequisites.",
+  "version": "0.0.2",
   "author": "Salesforce",
-  "bugs": "https://github.com/forcedotcom/cli/issues",
+  "bugs": {
+    "url": "https://github.com/forcedotcom/cli/issues"
+  },
   "dependencies": {
     "@oclif/core": "^2.8.2",
     "@salesforce/core": "^4.0.1",
@@ -11,7 +13,10 @@
     "@salesforce/sf-plugins-core": "^3.0.4",
     "tslib": "^2"
   },
-  "eslintIgnore": ["*.test.ts", "*.nut.ts"],
+  "eslintIgnore": [
+    "*.test.ts",
+    "*.nut.ts"
+  ],
   "coveragePathIgnorePatterns": [
     "<rootDir>/src/"
   ],
@@ -60,7 +65,7 @@
     "/oclif.manifest.json",
     "/schemas"
   ],
-  "homepage": "https://github.com/salesforcecli/plugin-switch",
+  "homepage": "https://github.com/nphan-sts/plugin-switch",
   "keywords": [
     "force",
     "salesforce",
@@ -87,7 +92,10 @@
       }
     }
   },
-  "repository": "salesforcecli/plugin-switch",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nphan-sts/plugin-switch"
+  },
   "scripts": {
     "build": "wireit",
     "clean": "sf-clean",
@@ -161,7 +169,7 @@
     "test": {
       "dependencies": [
         "test:compile",
-        "test:command-reference",
+        "lint",
         "test:json-schema"
       ]
     },
@@ -183,6 +191,36 @@
         "schemas"
       ],
       "output": []
+    },
+    "test:only": {
+      "command": "nyc mocha \"test/**/*.test.ts\"",
+      "env": {
+        "FORCE_COLOR": "2"
+      },
+      "files": [
+        "test/**/*.ts",
+        "src/**/*.ts",
+        "**/tsconfig.json",
+        ".mocha*",
+        "!*.nut.ts",
+        ".nycrc"
+      ],
+      "output": []
+    },
+    "test:deprecation-policy": {
+      "command": "\"./bin/dev\" snapshot:compare",
+      "files": [
+        "src/**/*.ts"
+      ],
+      "output": [],
+      "dependencies": [
+        "compile"
+      ]
     }
+  },
+  "types": "./lib/index.d.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
   }
 }
