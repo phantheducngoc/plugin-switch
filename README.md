@@ -13,18 +13,8 @@ node --version
 If your node version is earlier than 8 (or if you don’t have Node.js installed), run this command to install LTS:
 ```
 
-```bash
-nvm install –-lts
-Then run this command to ensure nvm always loads the installed LTS version in new terminals:
-```
-
-```bash
-nvm alias "default" "lts/\*"
-Install the Yarn package manager.
-```
-
 ````bash
-npm install -g yarn
+sudo npm install -g yarn
 Install TypeScript (target es2017.)
 
 ```bash
@@ -42,15 +32,16 @@ sfdx update
 We recommend you use Visual Studio Code with Salesforce Extensions as your IDE, because it includes tools for developing on the Salesforce platform.
 ```
 
-## Install
+## Install(not ready)
 
 ```bash
 sf plugins install @salesforce/plugin-switch@x.y.z
 ```
 
-### Build
+### Build(use git)
 
 To build the plugin locally, make sure to have yarn installed and run the following commands:
+
 
 ```bash
 # Clone the repository
@@ -66,6 +57,17 @@ sf plugins link .
 # To verify
 sf plugins
 ```
+
+```bash
+# Create SFDX project with manifest
+cd ../
+sfdx force:project:create --projectname "plugin-switch-sfdx" --manifest
+cd plugin-switch-sfdx
+git init
+```
+Copy package.xml in LPC-830 to package.xml file
+
+
 
 ## Commands
 
