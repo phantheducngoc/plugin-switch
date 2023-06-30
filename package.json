@@ -75,7 +75,7 @@
     "sf-plugin",
     "sf"
   ],
-  "license": "UNLICENSED",
+  "license": "BSD-3-Clause",
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
@@ -220,7 +220,6 @@
   },
   "types": "./lib/index.d.ts",
   "directories": {
-    "lib": "lib",
     "test": "test"
   }
 }
