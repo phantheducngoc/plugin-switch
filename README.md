@@ -48,6 +48,7 @@ To build the plugin locally, make sure to have yarn installed and run the follow
 git clone https://github.com/nphan-sts/plugin-switch.git
 
 # Install the dependencies and compile
+cd plugin-switch
 yarn && yarn build
 ```
 
