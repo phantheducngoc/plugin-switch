@@ -9,7 +9,7 @@ import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages, AuthInfo, Connection } from '@salesforce/core';
 
 Messages.importMessagesDirectory(__dirname);
-const messages = Messages.loadMessages('plugin-switch', 'connect');
+const messages = Messages.loadMessages('plugin-switch-np', 'switch.connect');
 
 export default class ConnectOrg extends SfCommand<void> {
   public static readonly summary = messages.getMessage('summary');

@@ -9,7 +9,7 @@ import { Messages } from '@salesforce/core';
 import { execCmd } from '../..';
 
 Messages.importMessagesDirectory(__dirname);
-const messages = Messages.loadMessages('plugin-switch', 'retrieve');
+const messages = Messages.loadMessages('plugin-switch-np', 'switch.retrieve');
 
 export type SwitchRetrieveResult = {
   path: string;
