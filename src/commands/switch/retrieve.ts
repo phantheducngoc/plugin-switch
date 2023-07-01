@@ -6,16 +6,12 @@
  */
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { execCmd } from '../..';
+import { execCmd,ExecCmdResult } from '../..';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('plugin-switch-np', 'switch.retrieve');
 
-export type SwitchRetrieveResult = {
-  path: string;
-};
-
-export default class SwitchRetrieve extends SfCommand<SwitchRetrieveResult> {
+export default class SwitchRetrieve extends SfCommand<ExecCmdResult<any>> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
@@ -32,18 +28,15 @@ export default class SwitchRetrieve extends SfCommand<SwitchRetrieveResult> {
   public static readonly requiresProject = true;
   public static requiresUsername = true;
 
-  public async run(): Promise<SwitchRetrieveResult> {
+  public async run(): Promise<ExecCmdResult<any>> {
     await execCmd('sf org display user', { async: true });
     const { flags } = await this.parse(SwitchRetrieve);
-    this.log(flags.package);
-    await execCmd(`sf project retrieve start --manifest ${flags.package}`, { async: true });
-    setTimeout(() => {
-      this.log('delay');
-    }, 3000);
-    await execCmd('git add .', { async: true });
 
-    return {
-      path: '/Users/ngocphan/salesforce-plugins/plugin-switch/src/commands/switch/retrieve.ts',
-    };
+    const result = await execCmd(`sf project retrieve start --manifest ${flags.package}`, { async: true });
+    this.log(result.shellOutput);
+    setTimeout(() => {
+      execCmd('git add .', { async: true });
+    }, 5000);
+    return result;
   }
 }

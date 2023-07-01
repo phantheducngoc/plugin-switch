@@ -8,16 +8,12 @@
 import * as process from 'child_process';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { execCmd } from '../..';
+import { execCmd,ExecCmdResult } from '../..';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('plugin-switch-np', 'switch.switchOff');
 
-export type SwitchSwitchOffResult = {
-  path: string;
-};
-
-export default class SwitchSwitchOff extends SfCommand<SwitchSwitchOffResult> {
+export default class SwitchSwitchOff extends SfCommand<ExecCmdResult<any>> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
@@ -55,16 +51,15 @@ export default class SwitchSwitchOff extends SfCommand<SwitchSwitchOffResult> {
     );
   }
 
-  public async run(): Promise<SwitchSwitchOffResult> {
+  public async run(): Promise<ExecCmdResult<any>> {
     const { flags } = await this.parse(SwitchSwitchOff);
 
     await this.deactivate();
     const deployCommand = `sf project deploy start --manifest ${flags.package}`;
-    await execCmd(deployCommand, { async: true });
+    const result = await execCmd(deployCommand, { async: true });
+    this.log(result.shellOutput);
 
-    return {
-      path: '/Users/ngocphan/salesforce-plugins/plugin-switch/src/commands/switch/switchOff.ts',
-    };
+    return result;
   }
 
   // eslint-disable-next-line class-methods-use-this

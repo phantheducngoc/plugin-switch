@@ -1,7 +1,7 @@
 {
   "name": "plugin-switch-np",
   "description": "Before you generate a new Salesforce plugin, set up these prerequisites.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Salesforce",
   "bugs": {
     "url": "https://github.com/forcedotcom/cli/issues"
