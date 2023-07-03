@@ -1,4 +1,4 @@
-## Set Up Your Dev Environment
+## 1. Set Up Your Dev Environment
 
 Before you generate a new Salesforce plugin, set up these prerequisites.
 
@@ -32,17 +32,8 @@ sfdx update
 We recommend you use Visual Studio Code with Salesforce Extensions as your IDE, because it includes tools for developing on the Salesforce platform.
 ```
 
-## Install(not ready)
-
-```bash
-sf plugins install @salesforce/plugin-switch@x.y.z
-```
-
-### Build(use git)
-
+## 2. (move to step 3 first, if you cannot install plugin plugin-switch-np then back to this step) Build
 To build the plugin locally, make sure to have yarn installed and run the following commands:
-
-
 ```bash
 # Clone the repository
 git clone https://github.com/nphan-sts/plugin-switch.git
@@ -50,21 +41,21 @@ git clone https://github.com/nphan-sts/plugin-switch.git
 # Install the dependencies and compile
 cd plugin-switch
 yarn && yarn build
-```
-
-```bash
 # Link your plugin to the sf cli
 sf plugins link .
 # To verify
 sf plugins
 ```
 
+
+## 3.Create SFDX project with manifest 
 ```bash
-# Create SFDX project with manifest
 cd ../
 sfdx force:project:create --projectname "plugin-switch-sfdx" --manifest
 cd plugin-switch-sfdx
 git init
+# Install plugin switch if fails back to step 2 
+sf plugins install plugin-switch-np
 ```
 Copy package.xml in LPC-830 to package.xml file
 
@@ -73,6 +64,17 @@ Copy package.xml in LPC-830 to package.xml file
 git add .
 git commit -m "first commit"
 ```
+
+## 4. Retrieve components, then switch off , when migration completes, switch on 
+```bash
+sf switch:retrieve --package manifest/package.xml
+sf switch switchOff --package manifest/package.xml
+#after migration 
+sf switch switchOn --package manifest/package.xml
+
+```
+
+
 
 
 
@@ -88,7 +90,7 @@ SFDX project is required
 
 ```
 USAGE
-  $ sf switch retrieve -x <value> [--json]
+  $ sf switch retrieve -x path/to/package.xml
 
 FLAGS
   -x, --package=<value>  (required) Retrieve Flows, Validation Rules, Apex triggers, Process builders defined in package.xml.
@@ -101,7 +103,7 @@ DESCRIPTION
   Retrieve Flows, Validation Rules, Apex triggers, Process builders defined in package.xml.
 
 EXAMPLES
-  '$ sf switch:retrieve --package path/to/package.xml'
+  '$ sf switch:retrieve --package manifest/package.xml'
 ```
 
 - [`sf switch switchOff'`]
@@ -109,7 +111,7 @@ EXAMPLES
 ## `sf switch switchOff'`
 
 USAGE
-$ sf switch switchOff -x <value> [--json]
+$ sf switch switchOff -x path/to/package.xml
 
 FLAGS
 -x, --package=<value> (required) Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive. then deploy to the org.
@@ -122,7 +124,7 @@ DESCRIPTION
 Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive. then deploy to the org.
 
 EXAMPLES
-$ sf switch switchOff --package path/to/package.xml
+$ sf switch switchOff --package manifest/package.xml
 
 - [`sf switch switchOn'`]
 
@@ -131,7 +133,7 @@ $ sf switch switchOff --package path/to/package.xml
 Change Flows, Validation Rules, Apex triggers, Process builders to original version.
 
 USAGE
-$ sf switch switchOn -x <value> [--json]
+$ sf switch switchOn -x path/to/package.xml
 
 FLAGS
 -x, --package=<value> (required) Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
@@ -144,6 +146,6 @@ DESCRIPTION
 Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
 
 EXAMPLES
-$ sf switch switchOn --package path/to/package.xml
+$ sf switch switchOn --package manifest/package.xml
 
 <!-- commandsstop -->
