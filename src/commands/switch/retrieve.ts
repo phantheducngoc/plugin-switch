@@ -4,13 +4,16 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
+import { setTimeout } from 'timers/promises';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
 import { execCmd,ExecCmdResult } from '../..';
 
+
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('plugin-switch-np', 'switch.retrieve');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default class SwitchRetrieve extends SfCommand<ExecCmdResult<any>> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
@@ -28,15 +31,20 @@ export default class SwitchRetrieve extends SfCommand<ExecCmdResult<any>> {
   public static readonly requiresProject = true;
   public static requiresUsername = true;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<ExecCmdResult<any>> {
     await execCmd('sf org display user', { async: true });
     const { flags } = await this.parse(SwitchRetrieve);
 
     const result = await execCmd(`sf project retrieve start --manifest ${flags.package}`, { async: true });
     this.log(result.shellOutput);
-    setTimeout(() => {
-      execCmd('git add .', { async: true });
-    }, 5000);
+
+    await setTimeout(3000);
+
+    await execCmd('git add .', { async: true });
+
     return result;
   }
 }
+
+

@@ -13,6 +13,7 @@ import { execCmd,ExecCmdResult } from '../..';
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('plugin-switch-np', 'switch.switchOff');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default class SwitchSwitchOff extends SfCommand<ExecCmdResult<any>> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
@@ -51,6 +52,7 @@ export default class SwitchSwitchOff extends SfCommand<ExecCmdResult<any>> {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<ExecCmdResult<any>> {
     const { flags } = await this.parse(SwitchSwitchOff);
 
