@@ -42,6 +42,12 @@ export default class SwitchRetrieve extends SfCommand<ExecCmdResult<any>> {
     await setTimeout(3000);
 
     await execCmd('git add .', { async: true });
+    this.log('git add .');
+
+    await setTimeout(1000);
+
+    await execCmd('git commit -m "initial state"', { async: true});
+    this.log('git commit -m "original state"');
 
     return result;
   }

@@ -68,6 +68,12 @@ git init
 ```
 Copy package.xml in LPC-830 to package.xml file
 
+```bash
+# init commit
+git add .
+git commit -m "first commit"
+```
+
 
 
 ## Commands
