@@ -65,7 +65,11 @@ git add .
 git commit -m "first commit"
 ```
 
-## 4. Retrieve components, then switch off , when migration completes, switch on 
+## 4. Authorizing target Org
+![img.png](img.png)
+
+
+## 5. Retrieve components, then switch off , when migration completes, switch on 
 ```bash
 sf switch:retrieve --package manifest/package.xml
 sf switch switchOff --package manifest/package.xml
@@ -83,69 +87,105 @@ sf switch switchOn --package manifest/package.xml
 SFDX project is required
 
 <!-- commands -->
+* [`sf switch connect`](#sf-switch-connect)
+* [`sf switch retrieve`](#sf-switch-retrieve)
+* [`sf switch switchOff`](#sf-switch-switchoff)
+* [`sf switch switchOn`](#sf-switch-switchon)
 
-- [`sf switch retrieve'`]
+## `sf switch connect`
 
-## `sf switch retrieve'`
+Authorize an org.
 
 ```
 USAGE
-  $ sf switch retrieve -x path/to/package.xml
+  $ sf switch connect -u <value> [--json]
 
 FLAGS
-  -x, --package=<value>  (required) Retrieve Flows, Validation Rules, Apex triggers, Process builders defined in package.xml.
+  -u, --username=<value>  (required) Authorize an org.
 
 GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
+  Authorize an org.
+
+  Have to authorize an org first.
+
+EXAMPLES
+  $ sf switch connect --username username
+```
+
+## `sf switch retrieve`
+
+Retrieve package.xml and Git repository initialized.
+
+```
+USAGE
+  $ sf switch retrieve -x <value> [--json]
+
+FLAGS
+  -x, --package=<value>  (required) Retrieve Flows, Validation Rules, Apex triggers, Process builders defined in
+                         package.xml.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Retrieve package.xml and Git repository initialized.
 
   Retrieve Flows, Validation Rules, Apex triggers, Process builders defined in package.xml.
 
 EXAMPLES
-  '$ sf switch:retrieve --package manifest/package.xml'
+  '$ sf switch:retrieve --package path/to/package.xml'
 ```
 
-- [`sf switch switchOff'`]
+## `sf switch switchOff`
 
-## `sf switch switchOff'`
+Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive.
 
+```
 USAGE
-$ sf switch switchOff -x path/to/package.xml
+  $ sf switch switchOff -x <value> [--json]
 
 FLAGS
--x, --package=<value> (required) Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive. then deploy to the org.
+  -x, --package=<value>  (required) Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to
+                         false, Apex triggers status to Inactive. then deploy to the org.
 
 GLOBAL FLAGS
---json Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
+  Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to
+  Inactive.
 
-Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive. then deploy to the org.
+  Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to
+  Inactive. then deploy to the org.
 
 EXAMPLES
-$ sf switch switchOff --package manifest/package.xml
+  $ sf switch switchOff --package path/to/package.xml
+```
 
-- [`sf switch switchOn'`]
-
-## `sf switch switchOn'`
+## `sf switch switchOn`
 
 Change Flows, Validation Rules, Apex triggers, Process builders to original version.
 
+```
 USAGE
-$ sf switch switchOn -x path/to/package.xml
+  $ sf switch switchOn -x <value> [--json]
 
 FLAGS
--x, --package=<value> (required) Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
+  -x, --package=<value>  (required) Change Flows, Validation Rules, Apex triggers, Process builders to original version.
+                         then deploy to the org.
 
 GLOBAL FLAGS
---json Format output as json.
+  --json  Format output as json.
 
 DESCRIPTION
+  Change Flows, Validation Rules, Apex triggers, Process builders to original version.
 
-Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
+  Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
 
 EXAMPLES
-$ sf switch switchOn --package manifest/package.xml
-
+  $ sf switch switchOn --package path/to/package.xml
+```
 <!-- commandsstop -->
