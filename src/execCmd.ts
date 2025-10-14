@@ -4,16 +4,17 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import * as fs from 'fs';
-import { spawn, SpawnOptionsWithoutStdio } from 'child_process';
-import { join as pathJoin, resolve as pathResolve } from 'path';
-import { inspect } from 'util';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import { spawn, SpawnOptionsWithoutStdio } from 'node:child_process';
+import { inspect } from 'node:util';
+import shelljs from 'shelljs';
 import { SfError } from '@salesforce/core';
 import { Duration, env, parseJson } from '@salesforce/kit';
 import { AnyJson, isNumber, Many } from '@salesforce/ts-types';
 import Debug from 'debug';
-import * as shelljs from 'shelljs';
-import { ExecCallback, ExecOptions, ShellString } from 'shelljs';
+import { ExecCallback, ShellString } from 'shelljs';
 import stripAnsi = require('strip-ansi');
 import { genUniqueString } from './genUniqueString';
 
@@ -33,11 +34,6 @@ type BaseExecOptions = {
    */
   cli?: CLI;
 };
-
-export type ExecCmdOptions = ExecOptions &
-  BaseExecOptions &
-  // prevent the overriding of our default by passing in an explicitly undefined value for cwd
-  ({ cwd: string } | { cwd?: never });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ExcludeMethods<T> = Pick<T, NonNullable<{ [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>>;
@@ -64,21 +60,52 @@ export interface ExecCmdResult<T> {
    * Command execution duration.
    */
   execCmdDuration: Duration;
+  /** raw stdout (string) */
+  stderr?: string;
+  /** actual process exit code (0 if success) */
+  exitCode: number;
 }
 
-const buildCmdOptions = (options?: ExecCmdOptions): ExecCmdOptions & { cwd: string } => {
-  const defaults: ExecCmdOptions = {
-    env: { ...process.env, ...options?.env },
-    cwd: process.cwd(),
-    timeout: Duration.hours(1).milliseconds, // 1 hour
-    silent: true,
-    cli: 'inherit',
+export type ExecCmdOptions = {
+  env?: NodeJS.ProcessEnv;
+  cwd?: string;
+  timeout?: number;
+  silent?: boolean;
+  cli?: 'inherit' | string;
+  shell?: string;
+
+  /** If set, throw when the process exit code !== this value */
+  ensureExitCode?: number;
+  async?: boolean;
+};
+
+export const buildCmdOptions = (options: ExecCmdOptions = {}): ExecCmdOptions & { cwd: string } => {
+  // Merge envs in a typed-safe way
+  const mergedEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    ...(options.env ?? {}),
   };
+
+  // Ensure cwd is always a concrete string
+  const cwd: string = typeof options.cwd === 'string' && options.cwd.length > 0 ? options.cwd : process.cwd();
+
+  // Compose the base with defaults, then apply overrides from options
+  const base: ExecCmdOptions & { cwd: string } = {
+    env: mergedEnv,
+    cwd,
+    timeout: options.timeout ?? Duration.hours(1).milliseconds, // 1 hour
+    silent: options.silent ?? true,
+    cli: options.cli ?? 'inherit',
+    shell: options.shell, // may be undefined
+  };
+
+  // Environment variable can override shell last (explicit and discoverable)
   const shellOverride = env.getString('TESTKIT_EXEC_SHELL');
   if (shellOverride) {
-    defaults.shell = shellOverride;
+    base.shell = shellOverride;
   }
-  return { ...defaults, ...options };
+
+  return base;
 };
 
 // Create a Duration instance from process.hrtime
@@ -87,15 +114,21 @@ const hrtimeToMillisDuration = (hrTime: [number, number]) =>
   Duration.milliseconds(hrTime[0] * Duration.MILLIS_IN_SECONDS + hrTime[1] / 1e6);
 
 // Add JSON output if json flag is set
-const addJsonOutput = <T>(cmd: string, result: ExecCmdResult<T>, file: string): ExecCmdResult<T> => {
-  if (cmd.includes('--json')) {
-    try {
-      result.jsonOutput = parseJson(stripAnsi(fs.readFileSync(file, 'utf-8'))) as unknown as JsonOutput<T>;
-    } catch (parseErr: unknown) {
-      result.jsonError = parseErr as Error;
-    }
+const addJsonOutput = <T>(cmd: string, input: ExecCmdResult<T>, file: string): ExecCmdResult<T> => {
+  if (!cmd.includes('--json')) return input;
+
+  let jsonOutput: JsonOutput<T> | undefined;
+  let jsonError: Error | undefined;
+
+  try {
+    const raw = fs.readFileSync(file, 'utf-8');
+    jsonOutput = parseJson(stripAnsi(raw)) as unknown as JsonOutput<T>;
+  } catch (e) {
+    jsonError = e as Error;
   }
-  return result;
+
+  // return a copy—no parameter reassign
+  return { ...input, jsonOutput, jsonError };
 };
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -107,7 +140,7 @@ export const getExitCodeError = (cmd: string, expectedCode: number, output: Shel
       : // or the raw string if there are no details
         `\n${output}`;
   return Error(
-    `Unexpected exit code for command: ${cmd}. Expected: ${expectedCode} Actual: ${output.code} ${errorDetails}`
+    `Unexpected exit code for command: ${cmd}. Expected: ${expectedCode} Actual: ${output.code} ${errorDetails}`,
   );
 };
 
@@ -122,25 +155,23 @@ export const getExitCodeError = (cmd: string, expectedCode: number, output: Shel
  */
 const determineExecutable = (cli: CLI = 'inherit'): string => {
   const debug = Debug('testkit:determineExecutable');
+  const defaultBin = process.platform === 'win32' ? 'dev.cmd' : 'dev';
 
-  const bin =
-    cli === 'inherit'
-      ? env.getString('TESTKIT_EXECUTABLE_PATH') ??
-        pathJoin(process.cwd(), 'bin', process.platform === 'win32' ? 'dev.cmd' : 'dev')
-      : cli;
-  const which = shelljs.which(bin);
-  let resolvedPath = pathResolve(bin);
-
-  // If 'which' finds the path in the system path, use that.
-  if (which) {
-    resolvedPath = which;
-  } else if (!fs.existsSync(bin)) {
-    throw new Error(`Cannot find specified executable path: ${bin}`);
+  const candidate =
+    cli === 'inherit' ? (env.getString('TESTKIT_EXECUTABLE_PATH') ?? path.join(process.cwd(), 'bin', defaultBin)) : cli;
+  const whichResult = shelljs.which(candidate);
+  let resolvedPath: string;
+  if (whichResult) {
+    // found on PATH (shelljs returns a ShellString-like object)
+    resolvedPath = whichResult.toString();
+  } else {
+    // treat it as a file path (absolute or relative)
+    resolvedPath = path.isAbsolute(candidate) ? candidate : path.resolve(candidate);
   }
 
   debug(`Resolved executable path: ${resolvedPath}`);
-  debug(`Using executable path: ${bin}`);
-  return bin;
+  debug(`Using executable path: ${candidate}`);
+  return candidate;
 };
 
 // const buildCmd = (cmdArgs: string, options?: ExecCmdOptions): string => {
@@ -151,17 +182,17 @@ const determineExecutable = (cli: CLI = 'inherit'): string => {
 const execCmdSync = <T>(cmd: string, options?: ExecCmdOptions): ExecCmdResult<T> => {
   const debug = Debug('testkit:execCmd');
 
-  // Add on the bin path
-  // cmd = buildCmd(cmd, options);
   const cmdOptions = buildCmdOptions(options);
+  const cwd = cmdOptions.cwd ?? process.cwd(); // ensure a string
 
   debug(`Running cmd: ${cmd}`);
   debug(`Cmd options: ${inspect(cmdOptions)}`);
 
   const stdoutFile = `${genUniqueString('stdout')}.txt`;
   const stderrFile = `${genUniqueString('stderr')}.txt`;
-  const stdoutFileLocation = pathJoin(cmdOptions.cwd, stdoutFile);
-  const stderrFileLocation = pathJoin(cmdOptions.cwd, stderrFile);
+
+  const stdoutFileLocation = path.join(cwd, stdoutFile);
+  const stderrFileLocation = path.join(cwd, stderrFile);
 
   const result = {
     shellOutput: new ShellString(''),
@@ -197,17 +228,16 @@ const execCmdSync = <T>(cmd: string, options?: ExecCmdOptions): ExecCmdResult<T>
 export const execCmdAsync = async <T>(cmd: string, options: ExecCmdOptions): Promise<ExecCmdResult<T>> => {
   const debug = Debug('testkit:execCmdAsync');
 
-  // Add on the bin path
-  // cmd = buildCmd(cmd, options);
-
   return new Promise<ExecCmdResult<T>>((resolve, reject) => {
     const cmdOptions = buildCmdOptions(options);
+    const cwd = cmdOptions.cwd ?? process.cwd(); // ensure we have a string
 
     debug(`Running cmd: ${cmd}`);
     debug(`Cmd options: ${inspect(cmdOptions)}`);
-    // buildCmdOptions will always
-    const stdoutFileLocation = pathJoin(cmdOptions.cwd, `${genUniqueString('stdout')}.txt`);
-    const stderrFileLocation = pathJoin(cmdOptions.cwd, `${genUniqueString('stderr')}.txt`);
+
+    const stdoutFileLocation = path.join(cwd, `${genUniqueString('stdout')}.txt`);
+    const stderrFileLocation = path.join(cwd, `${genUniqueString('stderr')}.txt`);
+
     const callback: ExecCallback = (code, stdout, stderr) => {
       const execCmdDuration = hrtimeToMillisDuration(process.hrtime(startTime));
       debug(`Command completed with exit code: ${code}`);
@@ -270,7 +300,7 @@ export function execCmd<T = AnyJson>(cmd: string, options: ExecCmdOptions & { as
 
 export function execCmd<T = AnyJson>(
   cmd: string,
-  options?: ExecCmdOptions
+  options?: ExecCmdOptions,
 ): ExecCmdResult<T> | Promise<ExecCmdResult<T>> {
   if (options?.async) {
     return execCmdAsync<T>(cmd, options);
@@ -347,7 +377,7 @@ export type PromptAnswers = Record<string, Many<string>>;
 export async function execInteractiveCmd(
   command: string,
   answers: PromptAnswers,
-  options: InteractiveCommandExecutionOptions = {}
+  options: InteractiveCommandExecutionOptions = {},
 ): Promise<InteractiveCommandExecutionResult> {
   const debug = Debug('testkit:execInteractiveCmd');
 
@@ -430,7 +460,7 @@ export async function execInteractiveCmd(
             stdout: result.stdout,
             stderr: result.stderr,
             code: result.code,
-          } as ShellString)
+          } as ShellString),
         );
       }
 

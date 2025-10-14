@@ -6,7 +6,7 @@ Change Flows, Validation Rules, Apex triggers, Process builders to original vers
 
 Change Flows, Validation Rules, Apex triggers, Process builders to original version. then deploy to the org.
 
-# flags.name.summary
+# flags.package.summary
 
 Change Flows, Validation Rules, Apex triggers, Process builders to original version.
 

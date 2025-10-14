@@ -1,15 +1,15 @@
 # summary
 
-Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive.
+Deactivate triggers, flows, workflow/validation rules locally, then deploy the changes.
 
 # description
 
-Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive. then deploy to the org.
+Finds metadata XML and flips Active/true flags to Inactive/false (triggers, flows, workflow, validation rules), then deploys using the provided manifest.
 
-# flags.name.summary
+# flags.package.summary
 
-Change Flows,Process builders activeVersionNumber to 0, Validation Rules active to false, Apex triggers status to Inactive.
+Path to package.xml
 
 # examples
 
-- <%= config.bin %> <%= command.id %> --package path/to/package.xml
+- <%= config.bin %> <%= command.id %> --package force-app/main/default/package.xml

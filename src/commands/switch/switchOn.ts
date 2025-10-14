@@ -7,28 +7,26 @@
 
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
-import { execCmd,ExecCmdResult } from '../..';
+import { execCmd } from '../..';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('plugin-switch-np', 'switch.switchOn');
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default class SwitchSwitchOn extends SfCommand<ExecCmdResult<any>> {
+export default class SwitchSwitchOn extends SfCommand<void> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
 
   public static readonly flags = {
-    package: Flags.string({
-      summary: messages.getMessage('description'),
+    package: Flags.file({
+      summary: messages.getMessage('flags.package.summary'), // <- use flags.package.summary
       char: 'x',
       required: true,
       exists: true,
     }),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async run(): Promise<ExecCmdResult<any>> {
+  public async run(): Promise<void> {
     const { flags } = await this.parse(SwitchSwitchOn);
 
     this.log('git restore .');
@@ -37,6 +35,5 @@ export default class SwitchSwitchOn extends SfCommand<ExecCmdResult<any>> {
     const deployCommand = `sf project deploy start --manifest ${flags.package}`;
     const result = await execCmd(deployCommand, { async: true });
     this.log(result.shellOutput);
-    return result;
   }
 }
